@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<link type="text/css" href="{{ url_for('static', filename='css/style.css')}}" rel="stylesheet"/>
 <head>
     <meta charset="UTF-8">
     {% block title -%}
@@ -13,9 +14,11 @@
 <body>
 <h1>Інформація з шаблону</h1>
 {% block content -%}
+    <ul>
     {% for i in menu %}
-    <li>{{ i }}</li>
+    <li><a href="{{ i.url }}">{{ i.name }}</a></li>
     {% endfor %}
+    </ul>
 {% endblock %}
 </body>
 </html>
