@@ -1,6 +1,7 @@
-from flask import Flask, render_template, url_for, request
+from flask import Flask, render_template, url_for, request, flash
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'urywe7897rweour'
 
 menu = [{'name': 'Головна сторінка', 'url': 'index'},
         {'name': 'Про сайт', 'url': 'about'},
@@ -22,6 +23,11 @@ def about():
 def contact():
     if request.method == 'POST':
         print(request.form)
+        if len(request.form['username']) > 2:
+            flash('ok', category='success')
+        else:
+            flash('no', category='error')
+
     return render_template('contact.html', menu=menu)
 
 

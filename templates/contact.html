@@ -2,6 +2,9 @@
 
 {% block content %}
 {{ super() }}
+{% for category, msg in get_flashed_messages(True) %}
+<div class="flash {{ category }}">{{ msg }}</div>
+{% endfor %}
 <form action="/contact" method="post">
     <p><label>Name: </label> <input type="text" name="username" value="" required /></p>
     <p><textarea name="message" id="" cols="30" rows="10"></textarea></p>
