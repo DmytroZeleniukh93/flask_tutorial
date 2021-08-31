@@ -1,17 +1,54 @@
-from flask import Flask, render_template, url_for, request, flash
+import sqlite3
+import os
+from flask import Flask, render_template, url_for, request, flash, session, redirect, g
+
+DATABASE = ''
+DEBUG = True
+SECRET_KEY = 'urywe7897rweour'
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'urywe7897rweour'
+app.config.from_object(__name__)
+
+app.config.update(dict(DATABASE=os.path.join(app.root_path, 'fl.db')))
 
 menu = [{'name': 'Головна сторінка', 'url': 'index'},
         {'name': 'Про сайт', 'url': 'about'},
-        {'name': 'Контакти', 'url': 'contact'}]
+        {'name': 'Контакти', 'url': 'contact'},
+        {'name': 'Залогінитись', 'url': 'login'}
+        ]
+
+
+def connect_db():
+    conn = sqlite3.connect(app.config['DATABASE'])
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def create_db():
+    db = connect_db()
+    with app.open_resource('sq_db.sql', mode='r') as f:
+        db.cursor().executescript(f.read())
+        db.commit()
+        db.close()
+
+
+def get_db():
+    if not hasattr(g, 'link_db'):
+        g.link_db = connect_db()
+    return g.link_db
 
 
 @app.route('/')
 @app.route('/index')
 def index():
+    db = get_db()
     return render_template('index.html', title='Головна сторінка', menu=menu)
+
+
+@app.teardown_appcontext
+def close_db(error):
+    if hasattr(g, 'link_db'):
+        g.link_db.close()
 
 
 @app.route('/about')
@@ -29,6 +66,27 @@ def contact():
             flash('no', category='error')
 
     return render_template('contact.html', menu=menu)
+
+
+@app.errorhandler(404)
+def page_404(error):
+    return render_template('page_404.html', title='Сторінку не знайдено', menu=menu)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'userLogged' in session:
+        return redirect(url_for('profile', username=session['userLogged']))
+    elif request.method == 'POST' and request.form['username'] == 'qwe' and request.form['psw'] == '123':
+        session['userLogged'] = request.form['username']
+        return redirect(url_for('profile', username=session['userLogged']))
+
+    return render_template('login.html', title='Авторизація', menu=menu)
+
+
+@app.route('/profile/<username>')
+def profile(username):
+    return f'You name: {username}'
 
 
 if __name__ == '__main__':
