@@ -1,8 +1,9 @@
 import sqlite3
 import os
-from flask import Flask, render_template, url_for, request, flash, session, redirect, g
+from flask import Flask, render_template, url_for, request, flash, session, redirect, g, abort
+from FDataBase import FDataBase
 
-DATABASE = ''
+DATABASE = '/tmp/fl.db' #######
 DEBUG = True
 SECRET_KEY = 'urywe7897rweour'
 
@@ -10,12 +11,6 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 
 app.config.update(dict(DATABASE=os.path.join(app.root_path, 'fl.db')))
-
-menu = [{'name': 'Головна сторінка', 'url': 'index'},
-        {'name': 'Про сайт', 'url': 'about'},
-        {'name': 'Контакти', 'url': 'contact'},
-        {'name': 'Залогінитись', 'url': 'login'}
-        ]
 
 
 def connect_db():
@@ -28,8 +23,8 @@ def create_db():
     db = connect_db()
     with app.open_resource('sq_db.sql', mode='r') as f:
         db.cursor().executescript(f.read())
-        db.commit()
-        db.close()
+    db.commit()
+    db.close()
 
 
 def get_db():
@@ -39,10 +34,10 @@ def get_db():
 
 
 @app.route('/')
-@app.route('/index')
 def index():
     db = get_db()
-    return render_template('index.html', title='Головна сторінка', menu=menu)
+    dbase = FDataBase(db)
+    return render_template('index.html', menu=dbase.get_menu(), posts=dbase.get_posts_anonce())
 
 
 @app.teardown_appcontext
@@ -51,42 +46,32 @@ def close_db(error):
         g.link_db.close()
 
 
-@app.route('/about')
-def about():
-    return render_template('about.html', title='Про сайт', menu=menu)
-
-
-@app.route('/contact', methods=['GET', 'POST'])
-def contact():
-    if request.method == 'POST':
-        print(request.form)
-        if len(request.form['username']) > 2:
-            flash('ok', category='success')
+@app.route("/add_post", methods=["POST", "GET"])
+def add_post():
+    db = get_db()
+    dbase = FDataBase(db)
+    if request.method == "POST":
+        if len(request.form['name']) > 1 and len(request.form['post']) > 1:
+            res = dbase.add_post(request.form['name'], request.form['post'])
+            print('sdf')
+            if not res:
+                flash('Ошибка добавления статьи', category='error')
+            else:
+                flash('Статья добавлена успешно', category='success')
         else:
-            flash('no', category='error')
+            flash('Ошибка добавления статьи', category='error')
 
-    return render_template('contact.html', menu=menu)
-
-
-@app.errorhandler(404)
-def page_404(error):
-    return render_template('page_404.html', title='Сторінку не знайдено', menu=menu)
+    return render_template('add_post.html', menu=dbase.get_menu(), title="Добавление статьи")
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if 'userLogged' in session:
-        return redirect(url_for('profile', username=session['userLogged']))
-    elif request.method == 'POST' and request.form['username'] == 'qwe' and request.form['psw'] == '123':
-        session['userLogged'] = request.form['username']
-        return redirect(url_for('profile', username=session['userLogged']))
-
-    return render_template('login.html', title='Авторизація', menu=menu)
-
-
-@app.route('/profile/<username>')
-def profile(username):
-    return f'You name: {username}'
+@app.route('/post/<int:id_post>')
+def show_post(id_post):
+    db = get_db()
+    dbase = FDataBase(db)
+    title, post = dbase.get_post(id_post)
+    if not title:
+        abort(404)
+    return render_template('post.html', menu=dbase.get_menu(), title=title, post=post)
 
 
 if __name__ == '__main__':

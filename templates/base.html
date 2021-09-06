@@ -14,11 +14,10 @@
 <body>
 <h1>Інформація з шаблону</h1>
 {% block content -%}
-    <ul>
-    {% for i in menu %}
-    <li><a href="{{ i.url }}">{{ i.name }}</a></li>
-    {% endfor %}
-    </ul>
+    {%- block mainmenu -%}
+<li><a href="{{url_for('index')}}">ex</a></li>
+<li><a href="{{url_for('add_post')}}">add post</a></li>
+    {% endblock mainmenu -%}
 {% endblock %}
 </body>
 </html>

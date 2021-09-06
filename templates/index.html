@@ -3,4 +3,10 @@
 {% block content %}
 {{ super() }}
 <h2>Інформація з index.html</h2>
+{% for i in posts %}
+<li>
+<p class="title"><a href="{{url_for('show_post', id_post=i.id)}}">{{i.title}}</a></p>
+<p class="annonce">{{ i.text }}</p>
+</li>
+{% endfor %}
 {% endblock %}
