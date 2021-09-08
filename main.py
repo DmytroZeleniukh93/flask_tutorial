@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from flask import Flask, render_template, url_for, request, flash, session, redirect, g, abort
+from flask import Flask, render_template, url_for, request, flash, session, redirect, g, abort, make_response
 from FDataBase import FDataBase
 
 DATABASE = '/tmp/fl.db' #######
@@ -52,7 +52,7 @@ def add_post():
     dbase = FDataBase(db)
     if request.method == "POST":
         if len(request.form['name']) > 1 and len(request.form['post']) > 1:
-            res = dbase.add_post(request.form['name'], request.form['post'])
+            res = dbase.add_post(request.form['name'], request.form['post'], request.form['url'])
             print('sdf')
             if not res:
                 flash('Ошибка добавления статьи', category='error')
@@ -72,6 +72,24 @@ def show_post(id_post):
     if not title:
         abort(404)
     return render_template('post.html', menu=dbase.get_menu(), title=title, post=post)
+
+
+@app.route("/cookie")
+def cookie():
+    x = ''
+    if request.cookies.get('q'):
+        x = request.cookies.get('q')
+
+    res = make_response(f'<h1>Cookie: {x} </h1>')
+    res.set_cookie('q', 'yes')
+    return res
+
+
+@app.route('/delcookie')
+def del_cookie():
+    res = make_response('<h1> Cookie del </h1>')
+    res.set_cookie('q', '')
+    return res
 
 
 if __name__ == '__main__':

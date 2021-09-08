@@ -16,9 +16,15 @@ class FDataBase:
             print("Ошибка чтения из БД")
         return []
 
-    def add_post(self, title, text):
+    def add_post(self, title, text, url):
         try:
-            self.__cur.execute('INSERT INTO posts VALUES(NULL, ?, ?)', (title, text))
+            self.__cur.execute(f"SELECT COUNT() as `count` FROM posts WHERE url LIKE '{url}'")
+            res = self.__cur.fetchone()
+            if res['count'] > 0:
+                print("Статья с таким url уже существует")
+                return False
+            
+            self.__cur.execute('INSERT INTO posts VALUES(NULL, ?, ?, ?)', (title, text, url))
             self.__db.commit()
         except sqlite3.Error as error:
             print(f'Error {error}')
